@@ -39,7 +39,7 @@
             android:shadowDx="4"
             android:shadowDy="4"
             android:shadowRadius="0.01"
-            android:text="WINTER\nFRAGMENT\nRESTORED"
+            android:text="SPRING\nFRAGMENT\nRESTORED"
             android:textColor="#FFFFFF"
             android:textSize="28sp" />
 

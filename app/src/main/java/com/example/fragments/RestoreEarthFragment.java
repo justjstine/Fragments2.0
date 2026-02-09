@@ -75,6 +75,8 @@ public class RestoreEarthFragment extends Fragment {
     private Runnable typingRunnable;
     private SoundPool soundPool;
     private int typingSoundId = -1;
+    private int typingSoundStreamId = 0;
+    private boolean typingSoundLooping = false;
 
     public RestoreEarthFragment() {
         // Required empty public constructor
@@ -151,6 +153,7 @@ public class RestoreEarthFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        stopTypingSoundLoop();
         if (soundPool != null) {
             soundPool.release();
             soundPool = null;
@@ -181,6 +184,20 @@ public class RestoreEarthFragment extends Fragment {
         if (soundPool != null && typingSoundId != -1) {
             soundPool.play(typingSoundId, 0.3f, 0.3f, 1, 0, 1.0f);
         }
+    }
+
+    private void startTypingSoundLoop() {
+        if (soundPool == null || typingSoundId == -1 || typingSoundLooping) return;
+        typingSoundStreamId = soundPool.play(typingSoundId, 0.3f, 0.3f, 1, -1, 1.0f);
+        typingSoundLooping = typingSoundStreamId != 0;
+    }
+
+    private void stopTypingSoundLoop() {
+        if (soundPool != null && typingSoundStreamId != 0) {
+            soundPool.stop(typingSoundStreamId);
+        }
+        typingSoundStreamId = 0;
+        typingSoundLooping = false;
     }
 
     private void startWhiteFlash(View parentView) {
@@ -470,18 +487,21 @@ public class RestoreEarthFragment extends Fragment {
         if (typingRunnable != null) {
             typingHandler.removeCallbacks(typingRunnable);
         }
+        stopTypingSoundLoop();
 
         if (kiboDialogueText == null) return;
         kiboDialogueText.setText("");
         final int[] index = {0};
+        startTypingSoundLoop();
         typingRunnable = new Runnable() {
             @Override
             public void run() {
-                if (index[0] <= text.length()) {
-                    kiboDialogueText.setText(text.substring(0, index[0]));
-                    playTypingSound();
+                if (index[0] < text.length()) {
+                    kiboDialogueText.setText(text.substring(0, index[0] + 1));
                     index[0]++;
                     typingHandler.postDelayed(this, 50);
+                } else {
+                    stopTypingSoundLoop();
                 }
             }
         };
@@ -492,24 +512,51 @@ public class RestoreEarthFragment extends Fragment {
         if (typingRunnable != null) {
             typingHandler.removeCallbacks(typingRunnable);
         }
+        stopTypingSoundLoop();
 
         if (lumaDialogueText == null) return;
         lumaDialogueText.setText("");
         final int[] index = {0};
+        startTypingSoundLoop();
         typingRunnable = new Runnable() {
             @Override
             public void run() {
-                if (index[0] <= text.length()) {
-                    lumaDialogueText.setText(text.substring(0, index[0]));
-                    playTypingSound();
+                if (index[0] < text.length()) {
+                    lumaDialogueText.setText(text.substring(0, index[0] + 1));
                     index[0]++;
                     typingHandler.postDelayed(this, 50);
+                } else {
+                    stopTypingSoundLoop();
                 }
             }
         };
         typingHandler.post(typingRunnable);
     }
 
+    private void typeNarratorDialogue(String text) {
+        if (typingRunnable != null) {
+            typingHandler.removeCallbacks(typingRunnable);
+        }
+        stopTypingSoundLoop();
+
+        if (finalDialogueText == null) return;
+        finalDialogueText.setText("");
+        final int[] index = {0};
+        startTypingSoundLoop();
+        typingRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (index[0] < text.length()) {
+                    finalDialogueText.setText(text.substring(0, index[0] + 1));
+                    index[0]++;
+                    typingHandler.postDelayed(this, 50);
+                } else {
+                    stopTypingSoundLoop();
+                }
+            }
+        };
+        typingHandler.post(typingRunnable);
+    }
 
     private void startFloatingAnimation(View view, boolean isKibo) {
         float startY = isKibo ? 0f : -20f;
@@ -612,18 +659,21 @@ public class RestoreEarthFragment extends Fragment {
         if (typingRunnable != null) {
             typingHandler.removeCallbacks(typingRunnable);
         }
+        stopTypingSoundLoop();
 
         if (finalDialogueText == null) return;
         finalDialogueText.setText("");
         final int[] index = {0};
+        startTypingSoundLoop();
         typingRunnable = new Runnable() {
             @Override
             public void run() {
-                if (index[0] <= text.length()) {
-                    finalDialogueText.setText(text.substring(0, index[0]));
-                    playTypingSound();
+                if (index[0] < text.length()) {
+                    finalDialogueText.setText(text.substring(0, index[0] + 1));
                     index[0]++;
                     typingHandler.postDelayed(this, 50);
+                } else {
+                    stopTypingSoundLoop();
                 }
             }
         };
@@ -906,5 +956,3 @@ public class RestoreEarthFragment extends Fragment {
         }
     }
 }
-
-

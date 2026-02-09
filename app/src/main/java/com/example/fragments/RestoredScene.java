@@ -39,7 +39,8 @@ public class RestoredScene extends Fragment {
         view.setOnClickListener(v -> {
             RestoreEarthFragment.markSeasonRestored(getContext(), "Spring");
             if (getActivity() instanceof SpringFragment) {
-                ((SpringFragment) getActivity()).navigateToEarthRestore();
+                // Close the Spring Activity to return to MainActivity
+                getActivity().finish();
             }
         });
     }
