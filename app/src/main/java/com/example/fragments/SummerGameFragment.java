@@ -250,19 +250,23 @@ public class SummerGameFragment extends DialogFragment {
             if (getActivity() != null) {
                 restoredView.setEnabled(false);
                 RestoreEarthFragment.markSeasonRestored(getContext(), "Summer");
-                // Create white flash overlay
+
+                androidx.fragment.app.Fragment currentFrag = getActivity().getSupportFragmentManager()
+                        .findFragmentById(R.id.fragment_container);
+                if (currentFrag instanceof RestoreEarthFragment) {
+                    ((RestoreEarthFragment) currentFrag).loadProgressFromPrefs();
+                }
+
                 View whiteFlash = new View(getContext());
                 whiteFlash.setBackgroundColor(Color.WHITE);
                 whiteFlash.setAlpha(0f);
-                
-                // Add to root view
+
                 ViewGroup overlayContainer = (ViewGroup) getView();
                 if (overlayContainer != null) {
                     overlayContainer.addView(whiteFlash, new ViewGroup.LayoutParams(
                             ViewGroup.LayoutParams.MATCH_PARENT,
                             ViewGroup.LayoutParams.MATCH_PARENT));
-                    
-                    // Animate white fade in and restored view fade out
+
                     restoredView.animate()
                             .alpha(0f)
                             .setDuration(350)
@@ -272,22 +276,26 @@ public class SummerGameFragment extends DialogFragment {
                             .alpha(1f)
                             .setDuration(350)
                             .withEndAction(() -> {
-                                // Dismiss and transition after white fade completes
                                 dismiss();
-                                if (getActivity() != null) {
-                                    androidx.fragment.app.FragmentTransaction transaction = getActivity()
-                                            .getSupportFragmentManager()
-                                            .beginTransaction();
-                                    transaction.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out);
-                                    transaction.replace(R.id.fragment_container, new RestoreEarthFragment());
-                                    transaction.addToBackStack(null);
-                                    transaction.commit();
-                                }
+                                navigateToRestoreEarth();
                             })
                             .start();
+                } else {
+                    dismiss();
+                    navigateToRestoreEarth();
                 }
             }
         });
+    }
+
+    private void navigateToRestoreEarth() {
+        if (getActivity() == null) return;
+        androidx.fragment.app.FragmentTransaction transaction = getActivity()
+                .getSupportFragmentManager()
+                .beginTransaction();
+        transaction.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out);
+        transaction.replace(R.id.fragment_container, new RestoreEarthFragment());
+        transaction.commit();
     }
     private void startWaveAnimation(View view) {
         View bg = view.findViewById(R.id.backgroundLayer);
