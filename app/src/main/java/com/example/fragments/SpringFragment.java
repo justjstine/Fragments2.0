@@ -18,16 +18,16 @@ public class SpringFragment extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        
         // Ensure edge-to-edge display
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-
+        
         // Additional configuration for full screen
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-            getWindow().getAttributes().layoutInDisplayCutoutMode =
+            getWindow().getAttributes().layoutInDisplayCutoutMode = 
                 android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
         }
-
+        
         setContentView(R.layout.spring_activity);
 
         hideSystemBars();

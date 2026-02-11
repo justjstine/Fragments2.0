@@ -51,6 +51,12 @@ public class StayHereFragment extends Fragment {
         spaceView = view.findViewById(R.id.spaceView);
         earthView = view.findViewById(R.id.earthView);
 
+        // Setup back button
+        ImageView backButton = view.findViewById(R.id.backButton);
+        if (backButton != null) {
+            backButton.setOnClickListener(v -> goBackToChoices());
+        }
+
         // Example visual tuning - change these to adjust appearance
         // Pixel stars: true = 1px blocks, false = smooth circles
         if (spaceView != null) {
@@ -150,5 +156,20 @@ public class StayHereFragment extends Fragment {
         if (spaceView != null) spaceView.stop();
         if (earthAnimator != null) earthAnimator.pause();
         super.onPause();
+    }
+
+    private void goBackToChoices() {
+        if (getActivity() != null) {
+            // Create RestoreEarthFragment with a flag to show choices directly
+            RestoreEarthFragment restoreEarthFragment = new RestoreEarthFragment();
+            Bundle args = new Bundle();
+            args.putBoolean("show_choices", true);
+            restoreEarthFragment.setArguments(args);
+
+            androidx.fragment.app.FragmentTransaction transaction = getActivity().getSupportFragmentManager().beginTransaction();
+            transaction.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out);
+            transaction.replace(R.id.fragment_container, restoreEarthFragment);
+            transaction.commit();
+        }
     }
 }

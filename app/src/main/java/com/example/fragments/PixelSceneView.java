@@ -21,6 +21,7 @@ public class PixelSceneView extends View {
     private int viewW, viewH;
     private int pixelSize;
     private long lastTimeMs;
+    private int backgroundDrawableId = R.drawable.spring_bg;
 
     private final List<Butterfly> butterflies = new ArrayList<>();
 
@@ -32,13 +33,18 @@ public class PixelSceneView extends View {
         setWillNotDraw(false);
     }
 
+    public void setBackgroundDrawable(int drawableId) {
+        this.backgroundDrawableId = drawableId;
+        invalidate();
+    }
+
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         viewW = w;
         viewH = h;
         pixelSize = Math.max(4, w / 80);
         try {
-            Bitmap raw = BitmapFactory.decodeResource(getResources(), R.drawable.spring_bg);
+            Bitmap raw = BitmapFactory.decodeResource(getResources(), backgroundDrawableId);
             if (raw != null) {
                 bgBitmap = Bitmap.createScaledBitmap(raw, w, h, true);
             }

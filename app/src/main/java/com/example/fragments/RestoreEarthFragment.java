@@ -71,6 +71,7 @@ public class RestoreEarthFragment extends Fragment {
     private View choiceStay;
     private int fragmentsRestored = 0;
     private static boolean hasResetThisRun = false;
+    private boolean isShowingChoices = false;
     private Handler typingHandler = new Handler(Looper.getMainLooper());
     private Runnable typingRunnable;
     private SoundPool soundPool;
@@ -113,13 +114,29 @@ public class RestoreEarthFragment extends Fragment {
         choiceNewJourney = view.findViewById(R.id.choiceNewJourney);
         choiceStay = view.findViewById(R.id.choiceStay);
 
-        resetProgressForNewRun();
-        applyGrayscaleEffect(earthImage);
+        // Check if we should show choices directly (coming back from StayHereFragment)
+        Bundle args = getArguments();
+        isShowingChoices = args != null && args.getBoolean("show_choices", false);
+        boolean isRevisit = args != null && args.getBoolean("revisit", false);
+
+        // Only reset progress if not showing choices directly and not revisiting
+        if (!isShowingChoices && !isRevisit) {
+            resetProgressForNewRun();
+            applyGrayscaleEffect(earthImage);
+        } else if (isRevisit) {
+            // If revisiting, apply grayscale to show current progress
+            applyGrayscaleEffect(earthImage);
+        }
+
         setupQuadrantClips();
         initTypingSoundPool();
 
-        // Initialize visuals from saved progress
-        loadProgressFromPrefs();
+        // Always load progress if revisiting or showing choices
+        if (isRevisit || isShowingChoices) {
+            loadProgressFromPrefs();
+        } else {
+            // First time - no progress to load
+        }
 
         if (restoreEarthButton != null) {
             restoreEarthButton.setOnClickListener(v -> startRestoreAnimation());
@@ -130,8 +147,13 @@ public class RestoreEarthFragment extends Fragment {
         setupIconListeners();
         setupFinalChoiceActions();
 
-        // Start white flash animation
-        startWhiteFlash(view);
+        if (isShowingChoices) {
+            // Skip animations and show choices directly
+            showChoicesDirectly();
+        } else {
+            // Start white flash animation
+            startWhiteFlash(view);
+        }
 
         // Hide system bars
         hideSystemBars();
@@ -142,7 +164,11 @@ public class RestoreEarthFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        loadProgressFromPrefs();
+        // Only load progress if not showing choices directly
+        // Always load if revisiting to maintain current progress
+        if (!isShowingChoices) {
+            loadProgressFromPrefs();
+        }
         // Configure the window
         if (getActivity() != null) {
             WindowCompat.setDecorFitsSystemWindows(getActivity().getWindow(), false);
@@ -470,7 +496,7 @@ public class RestoreEarthFragment extends Fragment {
         // Get current translation and move up an additional amount
         float currentTranslation = earthContainer.getTranslationY();
         ObjectAnimator moveUp = ObjectAnimator.ofFloat(earthContainer, "translationY", 
-                currentTranslation, currentTranslation - 220f);
+            currentTranslation, -320f);
         moveUp.setDuration(1200);
         moveUp.setInterpolator(new AccelerateDecelerateInterpolator());
         moveUp.addListener(new AnimatorListenerAdapter() {
@@ -612,6 +638,93 @@ public class RestoreEarthFragment extends Fragment {
         floatAnim.start();
     }
 
+    private void showChoicesDirectly() {
+        // Hide all initial UI elements
+        if (titleText != null) titleText.setVisibility(View.GONE);
+        if (springIcon != null) springIcon.setVisibility(View.GONE);
+        if (summerIcon != null) summerIcon.setVisibility(View.GONE);
+        if (autumnIcon != null) autumnIcon.setVisibility(View.GONE);
+        if (winterIcon != null) winterIcon.setVisibility(View.GONE);
+        if (fragmentCounter != null) fragmentCounter.setVisibility(View.GONE);
+        if (restoreEarthButton != null) restoreEarthButton.setVisibility(View.GONE);
+
+        // Hide reveal layers
+        if (earthSpringReveal != null) earthSpringReveal.setVisibility(View.GONE);
+        if (earthSummerReveal != null) earthSummerReveal.setVisibility(View.GONE);
+        if (earthAutumnReveal != null) earthAutumnReveal.setVisibility(View.GONE);
+        if (earthWinterReveal != null) earthWinterReveal.setVisibility(View.GONE);
+
+        // Hide characters (they're faded out in the normal flow)
+        if (kiboCharacter != null) {
+            kiboCharacter.setVisibility(View.GONE);
+            kiboCharacter.setAlpha(0f);
+        }
+        if (lumaCharacter != null) {
+            lumaCharacter.setVisibility(View.GONE);
+            lumaCharacter.setAlpha(0f);
+        }
+
+        // Hide dialogue containers (they're faded out in the normal flow)
+        if (kiboDialogueContainer != null) {
+            kiboDialogueContainer.setVisibility(View.GONE);
+            kiboDialogueContainer.setAlpha(0f);
+        }
+        if (lumaDialogueContainer != null) {
+            lumaDialogueContainer.setVisibility(View.GONE);
+            lumaDialogueContainer.setAlpha(0f);
+        }
+
+        // Show restored earth
+        if (earthImage != null) {
+            earthImage.setColorFilter(null);
+            earthImage.setAlpha(1f);
+            earthImage.setImageResource(R.drawable.earth);
+            // Reset any animations on earth
+            earthImage.setTranslationX(0f);
+            earthImage.setTranslationY(0f);
+            earthImage.setRotation(0f);
+        }
+
+        // Set earth container to the correct position after animation sequence completes
+        // The earth moves up by -220f in startEarthHoverUpward(), then another -220f in moveEarthHigherAndShowChoices()
+        // Total final position: -220f - 220f = -440f (adjusted to -380f for lower positioning)
+        if (earthContainer != null) {
+            earthContainer.setTranslationY(-320f);
+        }
+
+        // Show final dialogue
+        if (finalDialogueContainer != null) {
+            finalDialogueContainer.setVisibility(View.VISIBLE);
+            finalDialogueContainer.setAlpha(1f);
+        }
+        if (finalDialogueText != null) {
+            finalDialogueText.setText("\u201CYOU ARE NOT BROKEN. YOU ARE JUST RESETTING.\u201D");
+        }
+
+        // Show choices container
+        if (finalChoicesContainer != null) {
+            finalChoicesContainer.setVisibility(View.VISIBLE);
+            finalChoicesContainer.setAlpha(1f);
+        }
+
+        // Show each choice
+        if (choiceRevisit != null) {
+            choiceRevisit.setVisibility(View.VISIBLE);
+            choiceRevisit.setAlpha(1f);
+            startChoiceFloat(choiceRevisit, 0);
+        }
+        if (choiceNewJourney != null) {
+            choiceNewJourney.setVisibility(View.VISIBLE);
+            choiceNewJourney.setAlpha(1f);
+            startChoiceFloat(choiceNewJourney, 100);
+        }
+        if (choiceStay != null) {
+            choiceStay.setVisibility(View.VISIBLE);
+            choiceStay.setAlpha(1f);
+            startChoiceFloat(choiceStay, 200);
+        }
+    }
+
     private void setupFinalChoiceActions() {
         if (choiceRevisit != null) choiceRevisit.setOnClickListener(v -> goToRestoreEarth());
         if (choiceNewJourney != null) choiceNewJourney.setOnClickListener(v -> goToAppStart());
@@ -621,6 +734,11 @@ public class RestoreEarthFragment extends Fragment {
     private void goToRestoreEarth() {
         if (getActivity() != null) {
             RestoreEarthFragment restoreEarthFragment = new RestoreEarthFragment();
+            // Pass a flag to indicate this is a revisit, so we don't reset progress
+            Bundle args = new Bundle();
+            args.putBoolean("revisit", true);
+            restoreEarthFragment.setArguments(args);
+
             androidx.fragment.app.FragmentTransaction transaction = getActivity().getSupportFragmentManager().beginTransaction();
             transaction.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out);
             transaction.replace(R.id.fragment_container, restoreEarthFragment);
@@ -655,30 +773,6 @@ public class RestoreEarthFragment extends Fragment {
         }
     }
 
-    private void typeNarratorDialogue(String text) {
-        if (typingRunnable != null) {
-            typingHandler.removeCallbacks(typingRunnable);
-        }
-        stopTypingSoundLoop();
-
-        if (finalDialogueText == null) return;
-        finalDialogueText.setText("");
-        final int[] index = {0};
-        startTypingSoundLoop();
-        typingRunnable = new Runnable() {
-            @Override
-            public void run() {
-                if (index[0] < text.length()) {
-                    finalDialogueText.setText(text.substring(0, index[0] + 1));
-                    index[0]++;
-                    typingHandler.postDelayed(this, 50);
-                } else {
-                    stopTypingSoundLoop();
-                }
-            }
-        };
-        typingHandler.post(typingRunnable);
-    }
 
     private void navigateToChoicesScene() {
         if (getActivity() != null) {
@@ -690,7 +784,7 @@ public class RestoreEarthFragment extends Fragment {
         }
     }
 
-    private void loadProgressFromPrefs() {
+    public void loadProgressFromPrefs() {
         if (getContext() == null) return;
         SharedPreferences prefs = getContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         int count = 0;
